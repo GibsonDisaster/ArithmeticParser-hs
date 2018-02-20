@@ -11,4 +11,4 @@ A small parser that can solve simple arithmetic expressions.
 etc...
 
 # Valid operators
-+ - * / are the only valid operators at this time.
+\+ - * / are the only valid operators at this time.
