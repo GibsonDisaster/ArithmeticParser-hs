@@ -1,11 +1,14 @@
 module Main where
   import Text.ParserCombinators.Parsec hiding (spaces)
+  import Text.ParserCombinators.Parsec.Number (floating)
 
-  data Stmt = Const Integer
+  data Stmt = ConstI Int
+            | ConstF Float
             | Add Stmt Stmt
             | Sub Stmt Stmt
             | Div Stmt Stmt
             | Mul Stmt Stmt
+            | Exp Stmt Stmt
             | Expr Stmt Char Stmt
             deriving (Show, Eq)
 
@@ -16,19 +19,20 @@ module Main where
                             '*' -> Mul s1 s2
                             '/' -> Div s1 s2
 
-  solveStmt :: Stmt -> Integer
-  solveStmt (Const i) = i
+  solveStmt :: Stmt -> Float
+  solveStmt (ConstI i) = (fromIntegral i :: Float) / 1.0
+  solveStmt (ConstF f) = f
   solveStmt (Add i i2) = (solveStmt i) + (solveStmt i2)
   solveStmt (Sub i i2) = (solveStmt i) - (solveStmt i2)
   solveStmt (Mul i i2) = (solveStmt i) * (solveStmt i2)
-  solveStmt (Div i i2) = (solveStmt i) `div` (solveStmt i2)
+  solveStmt (Div i i2) = (solveStmt i) / (solveStmt i2)
   solveStmt (Expr s1 o s2) = op (solveStmt s1) (solveStmt s2)
     where
       op = case o of
             '+' -> (+)
             '-' -> (-)
             '*' -> (*)
-            '/' -> (div)
+            '/' -> (/)
 
   spaces :: Parser ()
   spaces = skipMany1 space
@@ -36,7 +40,12 @@ module Main where
   number :: Parser Stmt
   number = do
     ds <- many1 digit
-    return $ Const (read ds)
+    return $ ConstI (read ds)
+
+  float :: Parser Stmt
+  float = do
+    f <- floating
+    return $ ConstF f
 
   parseParen :: Parser Stmt
   parseParen = do
@@ -45,7 +54,7 @@ module Main where
 
   parseStmt :: Parser Stmt
   parseStmt = do
-    st <- choice [parseParen, number]
+    st <- choice [parseParen, float, number]
     return st
 
   mainParser :: Parser Stmt
